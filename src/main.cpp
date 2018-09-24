@@ -11,6 +11,7 @@ void glVertex(const float2 & v) { glVertex2f(v.x, v.y); }
 struct circle { float2 center; float radius; };
 struct posed_box { float2 half_extent; float2 position; float orientation; };
 struct segment { float2 p0, p1; };
+struct convex_polygon { float2 points[6]; };
 
 float2 support(circle c, float2 direction) { return c.center + normalize(direction) * c.radius; }
 float2 support(posed_box b, float2 direction) 
@@ -19,6 +20,21 @@ float2 support(posed_box b, float2 direction)
     return b.position + rot(b.orientation, float2{local_dir.x > 0 ? b.half_extent.x : -b.half_extent.x, local_dir.y > 0 ? b.half_extent.y : -b.half_extent.y});
 }
 float2 support(segment l, float2 direction) { return dot(direction, l.p1-l.p0) > 0 ? l.p1 : l.p0; }
+float2 support(convex_polygon p, float2 direction) 
+{ 
+    float2 best = p.points[0];
+    float best_d = dot(p.points[0], direction);
+    for(int i=1; i<6; ++i)
+    {
+        float d = dot(p.points[i], direction);
+        if(d > best_d)
+        {
+            best = p.points[i];
+            best_d = d;
+        }
+    }
+    return best;
+}
 
 void draw(circle c)
 {
@@ -33,7 +49,6 @@ void draw(circle c)
 void draw(posed_box b)
 {
     glBegin(GL_LINE_LOOP);
-
     glVertex(b.position + rot(b.orientation, float2{-b.half_extent.x, -b.half_extent.y}));
     glVertex(b.position + rot(b.orientation, float2{+b.half_extent.x, -b.half_extent.y}));
     glVertex(b.position + rot(b.orientation, float2{+b.half_extent.x, +b.half_extent.y}));
@@ -48,10 +63,16 @@ void draw(segment s)
     glVertex2f(s.p1.x, s.p1.y);
     glEnd();
 }
+void draw(convex_polygon p)
+{
+    glBegin(GL_LINE_LOOP);
+    for(auto & v : p.points) glVertex(v);
+    glEnd();
+}
 
 template<class T> auto make_support_function(T shape) { return [shape](float2 direction) { return support(shape, direction); }; }
 
-using shape = std::variant<circle, posed_box, segment>;
+using shape = std::variant<circle, posed_box, segment, convex_polygon>;
 
 std::optional<collision::penetration> find_intersection(const shape & shape_a, const shape & shape_b, const float2 & initial_direction)
 {
@@ -75,6 +96,26 @@ struct entity
         {
         case 0: return circle{body.position, radius};
         case 1: return posed_box{float2{radius}, body.position, body.orientation};
+        case 2:
+        {
+            convex_polygon p;
+            for(int i=0; i<6; ++i)
+            {
+                const float a = i*6.28318531f/6;
+                p.points[i] = body.position + rot(body.orientation, float2{std::cos(a)*radius, std::sin(a)*radius});
+            }
+            return p;
+        }
+        case 3:
+        {
+            convex_polygon p;
+            for(int i=0; i<6; ++i)
+            {
+                const float a = i*6.28318531f/3;
+                p.points[i] = body.position + rot(body.orientation, float2{std::cos(a)*radius, std::sin(a)*radius});
+            }
+            return p;
+        }
         default: throw std::logic_error("bad type");
         }
     }        
@@ -82,7 +123,7 @@ struct entity
 
 template<class ShapeA, class ShapeB> std::optional<collision::penetration> find_intersection(const ShapeA & shape_a, const ShapeB & shape_b)
 {
-    return collision::find_intersection(make_support_function(shape_a), make_support_function(shape_b)); //, b.body.position - a.body.position))
+    return collision::find_intersection(make_support_function(shape_a), make_support_function(shape_b));
 }
 
 #include <vector>
@@ -117,6 +158,8 @@ int main() try
             {
             case GLFW_KEY_1: w.entities.push_back({{{0.0f,1}, {0,0}, 0.0f, 0.0f, physics::compute_mass_for_circle(1.0f, radius), 0.4f}, radius, 0}); break;
             case GLFW_KEY_2: w.entities.push_back({{{0.0f,1}, {0,0}, 0.0f, 0.0f, physics::compute_mass_for_box(1.0f, float2{radius*2}), 0.4f}, radius, 1}); break;
+            case GLFW_KEY_3: w.entities.push_back({{{0.0f,1}, {0,0}, 0.0f, 0.0f, physics::compute_mass_for_circle(1.0f, radius*0.9f), 0.4f}, radius, 2}); break;
+            case GLFW_KEY_4: w.entities.push_back({{{0.0f,1}, {0,0}, 0.0f, 0.0f, physics::compute_mass_for_circle(1.0f, radius*0.9f), 0.4f}, radius, 3}); break;
             }            
         }
     });
