@@ -12,17 +12,11 @@ struct circle { float2 center; float radius; };
 struct posed_box { float2 half_extent; float2 position; float orientation; };
 struct segment { float2 p0, p1; };
 
-float2 rot(float a, float2 v)
-{
-    const float s = std::sin(a), c = std::cos(a);
-    return float2{v.x*c - v.y*s, v.x*s + v.y*c};
-}
-
 float2 support(circle c, float2 direction) { return c.center + normalize(direction) * c.radius; }
 float2 support(posed_box b, float2 direction) 
 { 
     float2 local_dir = rot(-b.orientation, direction);
-    return b.position + rot(b.orientation, {local_dir.x > 0 ? b.half_extent.x : -b.half_extent.x, local_dir.y > 0 ? b.half_extent.y : -b.half_extent.y});
+    return b.position + rot(b.orientation, float2{local_dir.x > 0 ? b.half_extent.x : -b.half_extent.x, local_dir.y > 0 ? b.half_extent.y : -b.half_extent.y});
 }
 float2 support(segment l, float2 direction) { return dot(direction, l.p1-l.p0) > 0 ? l.p1 : l.p0; }
 
@@ -40,11 +34,11 @@ void draw(posed_box b)
 {
     glBegin(GL_LINE_LOOP);
 
-    glVertex(b.position + rot(b.orientation, {-b.half_extent.x, -b.half_extent.y}));
-    glVertex(b.position + rot(b.orientation, {+b.half_extent.x, -b.half_extent.y}));
-    glVertex(b.position + rot(b.orientation, {+b.half_extent.x, +b.half_extent.y}));
-    glVertex(b.position + rot(b.orientation, {-b.half_extent.x, +b.half_extent.y}));
-    glVertex(b.position + rot(b.orientation, {-b.half_extent.x, -b.half_extent.y}));
+    glVertex(b.position + rot(b.orientation, float2{-b.half_extent.x, -b.half_extent.y}));
+    glVertex(b.position + rot(b.orientation, float2{+b.half_extent.x, -b.half_extent.y}));
+    glVertex(b.position + rot(b.orientation, float2{+b.half_extent.x, +b.half_extent.y}));
+    glVertex(b.position + rot(b.orientation, float2{-b.half_extent.x, +b.half_extent.y}));
+    glVertex(b.position + rot(b.orientation, float2{-b.half_extent.x, -b.half_extent.y}));
     glEnd();
 }
 void draw(segment s)

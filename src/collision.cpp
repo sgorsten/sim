@@ -4,9 +4,6 @@
 
 namespace collision::detail
 {
-    static float2 cross(float a, float2 b) { return cross(float3{0,0,a},float3{b,0}).xy(); }
-    static float2 cross(float2 a, float b) { return cross(float3{a,0},float3{0,0,b}).xy(); }
-
     static std::tuple<simplex,float2> make_simplex_point(const point & a) { return {{{a},1}, -a.p}; }
     static std::tuple<simplex,float2> make_simplex_edge(const point & a, const point & b) { return {{{a,b},2}, cross(cross(a.p, b.p-a.p), b.p-a.p)}; }
     static std::tuple<simplex,float2> next_simplex_2(const point & a, const point & b)
@@ -36,7 +33,7 @@ namespace collision::detail
 
     static polytope_edge make_polytope_edge(const point & v0, const point & v1)
     {
-        auto n = normalize(cross(v1.p - v0.p, 1));
+        auto n = normalize(cross(v1.p - v0.p, 1.0f));
         return {v0, v1, n, dot(v0.p,n)};
     }
 

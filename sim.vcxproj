@@ -29,6 +29,7 @@
     <ClCompile Include="src\physics.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="dep\include\linalg.h" />
     <ClInclude Include="src\collision.h" />
     <ClInclude Include="src\physics.h" />
   </ItemGroup>

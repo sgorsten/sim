@@ -8,5 +8,6 @@
   <ItemGroup>
     <ClInclude Include="src\collision.h" />
     <ClInclude Include="src\physics.h" />
+    <ClInclude Include="dep\include\linalg.h" />
   </ItemGroup>
 </Project>

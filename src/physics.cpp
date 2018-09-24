@@ -4,9 +4,6 @@
 
 namespace physics
 {
-    static float2 cross(float a, float2 b) { return cross(float3{0,0,a},float3{b,0}).xy(); }
-    static float2 cross(float2 a, float b) { return cross(float3{a,0},float3{0,0,b}).xy(); }
-
     float2 rigidbody::velocity() const { return momentum*inv_mass; }
     float rigidbody::spin() const { return angular_momentum*inv_moment;}
     float2 rigidbody::velocity_at_arm(const float2 & arm) const { return velocity() + cross(spin(), arm); }
