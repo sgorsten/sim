@@ -7,11 +7,16 @@ using namespace linalg::aliases;
 
 namespace physics
 {
+    struct mass_distribution { float mass, inv_mass, inv_moment; };
+    mass_distribution compute_mass_for_circle(float density, float radius);
+    mass_distribution compute_mass_for_box(float density, float2 dims);
+
     struct rigidbody 
     { 
         float2 position, momentum;
         float orientation, angular_momentum;
-        float inv_mass, inv_moment, elasticity; 
+        mass_distribution mass_dist;
+        float elasticity; 
     
         float2 velocity() const;
         float spin() const;

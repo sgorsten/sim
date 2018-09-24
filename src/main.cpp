@@ -115,8 +115,8 @@ int main() try
             float radius = std::max(radius_dist(w.rng), 0.05f);
             switch(key)
             {
-            case GLFW_KEY_1: w.entities.push_back({{{0.0f,1}, {0,0}, 0.0f, 0.0f, 1/(radius*radius), 2000.0f, 0.4f}, radius, 0}); break;
-            case GLFW_KEY_2: w.entities.push_back({{{0.0f,1}, {0,0}, 0.0f, 0.0f, 1/(radius*radius), 2000.0f, 0.4f}, radius, 1}); break;
+            case GLFW_KEY_1: w.entities.push_back({{{0.0f,1}, {0,0}, 0.0f, 0.0f, physics::compute_mass_for_circle(1.0f, radius), 0.4f}, radius, 0}); break;
+            case GLFW_KEY_2: w.entities.push_back({{{0.0f,1}, {0,0}, 0.0f, 0.0f, physics::compute_mass_for_box(1.0f, float2{radius*2}), 0.4f}, radius, 1}); break;
             }            
         }
     });
@@ -138,7 +138,7 @@ int main() try
         {
             e.body.position += e.body.velocity()*timestep + accel*(timestep*timestep/2);
             e.body.orientation += e.body.spin()*timestep;
-            e.body.momentum += accel*timestep/e.body.inv_mass;
+            e.body.momentum += accel*(e.body.mass_dist.mass*timestep);
         }
 
         // Remove rigidbodies that have fallen off the screen

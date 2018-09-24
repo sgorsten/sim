@@ -4,8 +4,24 @@
 
 namespace physics
 {
-    float2 rigidbody::velocity() const { return momentum*inv_mass; }
-    float rigidbody::spin() const { return angular_momentum*inv_moment;}
+    mass_distribution compute_mass_for_circle(float density, float radius)
+    {
+        const float area = radius*radius*3.141593f;
+        const float mass = area*density;
+        const float moment = mass*radius*radius/2;
+        return {mass, 1/mass, 1/moment};
+    }
+
+    mass_distribution compute_mass_for_box(float density, float2 dims)
+    {
+        const float area = dims.x * dims.y;
+        const float mass = area*density;
+        const float moment = mass*length2(dims)/12;
+        return {mass, 1/mass, 1/moment};
+    }
+
+    float2 rigidbody::velocity() const { return momentum*mass_dist.inv_mass; }
+    float rigidbody::spin() const { return angular_momentum*mass_dist.inv_moment;}
     float2 rigidbody::velocity_at_arm(const float2 & arm) const { return velocity() + cross(spin(), arm); }
     void rigidbody::apply_impulse_at_arm(const float2 & arm, const float2 & impulse)
     {
@@ -13,6 +29,7 @@ namespace physics
         angular_momentum += cross(arm, impulse);
     }
 
+    static float sqr(float x) { return x*x; }
     void solve_constraints(const std::vector<linear_constraint> & constraints)
     {
         std::vector<float> constraint_impulses(constraints.size(), 0.0f);
@@ -30,8 +47,8 @@ namespace physics
                 float vn = dot(v1-v0, c.normal_a_to_b);
 
                 // Determine impulse needed to achieve target velocity, and clamp it against impulse limits
-                float impulse_denom = c.body_a->inv_mass + dot(cross(c.body_a->inv_moment * cross(c.arm_a, c.normal_a_to_b), c.arm_a), c.normal_a_to_b)
-                                    + (c.body_b ? c.body_b->inv_mass + dot(cross(c.body_b->inv_moment * cross(c.arm_b, c.normal_a_to_b), c.arm_b), c.normal_a_to_b) : 0);
+                float impulse_denom = c.body_a->mass_dist.inv_mass + c.body_a->mass_dist.inv_moment * sqr(dot(cross(1.0f,c.arm_a), c.normal_a_to_b))
+                                    + (c.body_b ? c.body_b->mass_dist.inv_mass + c.body_b->mass_dist.inv_moment * sqr(dot(cross(1.0f,c.arm_b), c.normal_a_to_b)) : 0);
                 float impulse = (c.target_velocity - vn) / impulse_denom;
                 impulse = std::max(impulse, c.min_impulse - sum);
                 impulse = std::min(impulse, c.max_impulse - sum);
