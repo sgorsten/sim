@@ -229,7 +229,7 @@ int main() try
             glfwGetFramebufferSize(win, &w, &h);
             float aspect = (float)w/h;
             auto m = linalg::frustum_matrix(-aspect, aspect, -1.0f, 1.0f, 1.0f, 2.0f, linalg::neg_z, linalg::neg_one_to_one);
-            glLoadMatrixf(&m.x.x);
+            glLoadMatrixf(m.data());
             glTranslatef(0,0,-1);
         }
 
